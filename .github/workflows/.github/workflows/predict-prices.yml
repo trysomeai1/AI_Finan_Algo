@@ -1,0 +1,23 @@
+name: Predict Prices (ML)
+
+# 매주 월~금 08:30 UTC = 17:30 KST (장 종료 15:30 후, 데이터 정리 시간 포함 → 다음날 예측)
+on:
+  schedule:
+    - cron: "30 8 * * 1,2,3,4,5"
+  workflow_dispatch: {}
+
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: pip install yfinance gspread google-auth pandas numpy scikit-learn
+      - name: Run prediction
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+        run: python predict_prices.py
