@@ -1,74 +1,37 @@
-
-import argparse
-import json
-import os
-import sys
-from datetime import datetime, timezone, timedelta
-
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
-import portfolio_engine as pe
-
-
-def write_csv(path, result):
-    import csv
-    with open(path, "w", newline="", encoding="utf-8") as f:
-        wr = csv.writer(f)
-        wr.writerow(["code", "weight"])
-        for k, v in result["weights"].items():
-            wr.writerow([k, round(v, 6)])
-    print(f"CSV 저장: {path}")
-
-
-def write_sheet(result):
-    import gspread
-    from google.oauth2.service_account import Credentials
-
-    sa = os.environ.get("GCP_SA_KEY")
-    sheet_id = os.environ.get("SHEET_ID")
-    if not sa or not sheet_id:
-        raise SystemExit("GCP_SA_KEY / SHEET_ID 환경변수가 필요합니다 (또는 --no-sheet 사용).")
-    info = json.loads(sa)
-    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-    gc = gspread.authorize(Credentials.from_service_account_info(info, scopes=scopes))
-    ss = gc.open_by_key(sheet_id)
-    try:
-        ws = ss.worksheet("TargetWeights")
-    except gspread.WorksheetNotFound:
-        ws = ss.add_worksheet("TargetWeights", rows=50, cols=8)
-    ws.clear()
-    rows = [["code", "weight"]] + [[k, round(v, 6)] for k, v in result["weights"].items()]
-    # RAW: 069500 등 앞자리 0 보존
-    ws.update("A1", rows, value_input_option="RAW")
-    kst = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M:%S")
-    ws.update("E1", [[kst]], value_input_option="RAW")
-    ws.update("F1", [[result["regime"]]], value_input_option="RAW")
-    ws.update("G1", [[json.dumps(result["scores"])]], value_input_option="RAW")
-    print(f"시트 기록 완료 · regime={result['regime']} · {kst}")
-
-
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--config", default=os.path.join(HERE, "..", "config", "universe_kr_etf.json"))
-    ap.add_argument("--out", default="target_weights.csv")
-    ap.add_argument("--no-sheet", action="store_true", help="시트 대신 CSV만")
-    args = ap.parse_args()
-
-    cfg = json.load(open(args.config, encoding="utf-8"))
-    scores, momentum = pe.fetch_market_data(cfg)
-    result = pe.compute_weights(scores, momentum, cfg)
-
-    print("regime :", result["regime"])
-    print("scores :", {k: round(v, 2) for k, v in result["scores"].items()})
-    print("weights:")
-    for k, v in result["weights"].items():
-        print(f"  {k:9s} {cfg['universe'][k]['name']:18s} {v*100:5.1f}%")
-
-    if args.no_sheet:
-        write_csv(args.out, result)
-    else:
-        write_sheet(result)
-
-
-if __name__ == "__main__":
-    main()
+{
+  "universe": {
+    "360750":   {"name": "TIGER 미국S&P500",      "group": "growth",    "base": 0.09, "cap": [0.0, 0.18]},
+    "133690":   {"name": "TIGER 미국나스닥100",   "group": "growth",    "base": 0.08, "cap": [0.0, 0.16]},
+    "458730":   {"name": "TIGER 미국배당다우존스","group": "growth",    "base": 0.06, "cap": [0.0, 0.14]},
+    "241180":   {"name": "TIGER 일본니케이225",   "group": "growth",    "base": 0.05, "cap": [0.0, 0.12]},
+    "069500":   {"name": "KODEX 200",             "group": "growth",    "base": 0.05, "cap": [0.0, 0.12]},
+    "329200":   {"name": "TIGER 리츠부동산인프라","group": "income",    "base": 0.04, "cap": [0.0, 0.10]},
+    "132030":   {"name": "KODEX 골드선물(H)",     "group": "gold",      "base": 0.13, "cap": [0.0, 0.22]},
+    "305080":   {"name": "TIGER 미국채10년선물",  "group": "longbond",  "base": 0.10, "cap": [0.0, 0.18]},
+    "148070":   {"name": "KIWOOM 국고채10년",     "group": "longbond",  "base": 0.08, "cap": [0.0, 0.16]},
+    "153130":   {"name": "KODEX 단기채권",        "group": "shortbond", "base": 0.14, "cap": [0.0, 0.50]},
+    "CASH_KRW": {"name": "현금",                  "group": "cash",      "base": 0.18, "cap": [0.0, 0.50]}
+  },
+  "yf_map": {
+    "360750": "360750.KS", "133690": "133690.KS", "458730": "458730.KS",
+    "241180": "241180.KS", "069500": "069500.KS", "329200": "329200.KS",
+    "132030": "132030.KS", "305080": "305080.KS", "148070": "148070.KS", "153130": "153130.KS"
+  },
+  "macro_proxies": {
+    "us10y": "^TNX", "wti": "CL=F", "gold": "GC=F", "usdkrw": "KRW=X",
+    "nasdaq": "^IXIC", "kospi": "^KS11"
+  },
+  "score_weights": {
+    "risk_off_equity":   0.18,
+    "rates_longbond":    0.15,
+    "inflation_gold":    0.15,
+    "riskoff_defensive": 0.20
+  },
+  "momentum": {"up": 0.05, "down": -0.05, "strong": 1.08, "weak": 0.94},
+  "regime": {
+    "normal_to_caution":     0.40,
+    "caution_to_riskoff":    1.00,
+    "max_growth_weight":     {"normal": 0.38, "caution": 0.28, "riskoff": 0.18},
+    "min_defensive_weight":  {"normal": 0.34, "caution": 0.45, "riskoff": 0.58}
+  }
+}
