@@ -1,15 +1,4 @@
-"""
-run_generate_weights.py — v3 비중 생성 엔트리포인트.
 
-사용:
-  # 로컬/시트 없이 CSV로 확인
-  python src/run_generate_weights.py --config config/universe_kr_etf.json --out target_weights.csv --no-sheet
-  # 시트에 기록 (env: GCP_SA_KEY=서비스계정 JSON, SHEET_ID=시트ID)
-  python src/run_generate_weights.py --config config/universe_kr_etf.json
-
-GitHub Actions에서는 GCP_SA_KEY / SHEET_ID 시크릿으로 시트에 직접 기록한다.
-TargetWeights 시트에 [code, weight] 와 E1=timestamp, F1=regime, G1=scores 를 함께 남긴다.
-"""
 import argparse
 import json
 import os
