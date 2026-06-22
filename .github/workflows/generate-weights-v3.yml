@@ -11,9 +11,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -r macro_hedge_v3/requirements.txt
+      - run: pip install -r requirements.txt
       - name: Generate weights
         env:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
-        run: python macro_hedge_v3/src/run_generate_weights.py --config macro_hedge_v3/config/universe_kr_etf.json
+        run: python run_generate_weights.py --config universe_kr_etf.json
