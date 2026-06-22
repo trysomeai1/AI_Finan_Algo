@@ -1,0 +1,19 @@
+name: Generate Target Weights v3
+on:
+  schedule:
+    - cron: "0 22 * * 0"
+  workflow_dispatch:
+jobs:
+  weights:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r macro_hedge_v3/requirements.txt
+      - name: Generate weights
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+        run: python macro_hedge_v3/src/run_generate_weights.py --config macro_hedge_v3/config/universe_kr_etf.json
