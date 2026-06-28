@@ -14,9 +14,13 @@ import pandas as pd
 import yfinance as yf
 from sklearn.ensemble import HistGradientBoostingRegressor
 
-ASSETS = ["133690.KS", "132030.KS", "305080.KS", "153130.KS", "069500.KS"]
-NAME = {"133690.KS": "나스닥100", "132030.KS": "금", "305080.KS": "미국채10년",
-        "153130.KS": "단기채", "069500.KS": "KOSPI200"}
+ASSETS = ["360750.KS", "133690.KS", "458730.KS", "241180.KS", "069500.KS",
+          "329200.KS", "132030.KS", "305080.KS", "148070.KS", "153130.KS"]
+NAME = {"360750.KS": "TIGER 미국S&P500", "133690.KS": "TIGER 미국나스닥100",
+        "458730.KS": "TIGER 미국배당다우존스", "241180.KS": "TIGER 일본니케이225",
+        "069500.KS": "KODEX 200", "329200.KS": "TIGER 리츠부동산인프라",
+        "132030.KS": "KODEX 골드선물(H)", "305080.KS": "TIGER 미국채10년선물",
+        "148070.KS": "KIWOOM 국고채10년", "153130.KS": "KODEX 단기채권"}
 SHEET_ID = os.environ.get("SHEET_ID", "1IeUupk0pAwDw6tBK-A7-12eNakwfLeo9F1cVdUqYIyk")
 H5 = 5  # 5거래일 예측
 
